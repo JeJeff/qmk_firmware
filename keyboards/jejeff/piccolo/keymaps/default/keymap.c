@@ -34,25 +34,39 @@ enum layer_names {
 #define KY_CHAT     LALT(KC_H) // Zoom Alt+H: Display/hide in-meeting chat panel
 #define KY_PARTICI  LALT(KC_U) // Zoom Alt+U: Display/hide participants panel
 #define KY_INVITE   LALT(KC_I) // Zoom Alt+I: Open invite window
-#define KY_RAISEHD  LALT(KC_Y) // Zoom Alt+Y: Raise/lower hand
+#define KY_RAISEHND LALT(KC_Y) // Zoom Alt+Y: Raise/lower hand
 #define KY_ENDMEET  LALT(KC_Q) // Zoom Alt+Q: End meeting
 
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_BASE] = LAYOUT(
-        MO(_FN),    KY_VIDEO,   KY_MICMUTE, KY_RAISEHD,  KC_MUTE
+        MO(_FN),    KY_VIDEO,   KY_MICMUTE, KY_RAISEHND, KC_MUTE
     ),
     [_FN] = LAYOUT(
-        _______,     KY_CAMERA,  KY_MUTEALL, KY_ENDMEET,  RESET
+        _______,    KY_CAMERA,  KY_MUTEALL, KY_ENDMEET,  RESET
     )
 };
 
-const char* oled_key_hint_text[32][MATRIX_ROWS] = {
-    // oled screen is 22 characters across
-    //          123456789-123456789-12
-    [_BASE] = {"Shf | Vid | Mic | Hnd"},
-    [_FN] =   {"Shf | Cam | Mut | End"}
+// Setup hint strings to display on the oled screen
+// THese are to help the user know what the buttons do
+// Oled screen is 21 characters across
+// NOTE:
+// Keep your strings exactly this long or the line wrapping will go wrong
+//                                           123456789-123456789-12
+const char oled_hint_text_base[] PROGMEM =  "^ | Vid | Mic  | Rais";
+const char oled_hint_text_base2[] PROGMEM = "^ |  eo | mute | hand";
+const char oled_hint_text_fn[] PROGMEM =    "v | Cam | Mute | End ";
+const char oled_hint_text_fn2[] PROGMEM =   "v | era | all  | call";
+
+PGM_P const oled_key_hint_text[2] = {
+    [_BASE] = oled_hint_text_base,
+    [_FN] = oled_hint_text_fn
 };
+PGM_P const oled_key_hint_text2[2] = {
+    [_BASE] = oled_hint_text_base2,
+    [_FN] = oled_hint_text_fn2
+};
+
 
 /*
 const char* oled_key_press_text[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -65,6 +79,7 @@ const char* oled_key_press_text[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 */
 
+/*
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case QMKBEST:
@@ -86,6 +101,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     return true;
 }
+*/
 
 
 #ifdef ENCODER_ENABLE
@@ -115,25 +131,30 @@ oled_rotation_t oled_init_user(oled_rotation_t rotation) {
 }
 
 void oled_task_user(void) {
-    oled_write_ln_P(PSTR("Zoom controller"), false);
+    oled_write_ln_P(PSTR("Piccolo Zoom control\n"), false);
     // Show button hints
-    switch (get_highest_layer(layer_state)) {
+    int layer_index = get_highest_layer(layer_state);
+    switch (layer_index) {
         case _BASE:
-            oled_write_ln_P(PSTR("Shf | Vid | Mic | Hnd"), false);
-            break;
         case _FN:
-            oled_write_ln_P(PSTR("Shf | Cam | Mut | End"), false);
+            // don't use oled_write_ln_P() because we already spill onto the next line due to string length
+            oled_write_P(oled_key_hint_text[layer_index], false);
+            oled_write_P(oled_key_hint_text2[layer_index], false);
             break;
+
         default:
             // Or use the write_ln shortcut over adding '\n' to the end of your string
             oled_write_ln_P(PSTR("Undefined"), false);
     }
 
+/*
     // Host Keyboard LED Status
     led_t led_state = host_keyboard_led_state();
     oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false);
     oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false);
     oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false);
+    */
+    
 }
 #endif
 
