@@ -21,17 +21,10 @@ enum layer_names {
     _FN
 };
 
-// Defines the keycodes used by our macros in process_record_user
-enum custom_keycodes {
-    QMKBEST = SAFE_RANGE,
-    QMKURL
-};
-
+// Some of the standard Zoom keyboard shortcuts you could use
 #define KY_VIDEO    LALT(KC_V) // Zoom Alt+V: Start/stop video
 #define KY_MICMUTE  LALT(KC_A) // Zoom Alt+A: Mute/unmute audio
 #define KY_MUTEALL  LALT(KC_M) // Zoom Alt+M: Mute/unmute audio for everyone except host (Note: For the meeting host only)
-// Zoom Alt+S: Launch share screen window and stop screen share (Note: Will only work when meeting control toolbar has focus)
-// Zoom Alt+Shift+S: Start/stop new screen share (Note: Will only work when meeting control toolbar has focus)
 #define KY_SHPAUSE  LALT(KC_T) // Zoom Alt+T: Pause or resume screen share (Note: Will only work when meeting control toolbar has focus)
 #define KY_RECLOCAL LALT(KC_R) // Zoom Alt+R: Start/stop local recording
 #define KY_RECCLOUD LALT(KC_C) // Zoom Alt+C: Start/stop cloud recording
@@ -39,7 +32,7 @@ enum custom_keycodes {
 #define KY_CAMERA   LALT(KC_N) // Zoom Alt+N: Switch camera
 #define KY_FULLSCR  LALT(KC_F) // Zoom Alt+F: Enter or exit full screen
 #define KY_CHAT     LALT(KC_H) // Zoom Alt+H: Display/hide in-meeting chat panel
-#define KY_PARTICI  LALT(KC_U) // Zoom Alt+U:Display/hide participants panel
+#define KY_PARTICI  LALT(KC_U) // Zoom Alt+U: Display/hide participants panel
 #define KY_INVITE   LALT(KC_I) // Zoom Alt+I: Open invite window
 #define KY_RAISEHD  LALT(KC_Y) // Zoom Alt+Y: Raise/lower hand
 #define KY_ENDMEET  LALT(KC_Q) // Zoom Alt+Q: End meeting
@@ -54,12 +47,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     )
 };
 
-// oled screen is 32 characters across
-// 123456789-123456789-12
-// Shf | Vid | Mic | Hnd
-// Shf | Cam | Mut | End
 const char* oled_key_hint_text[32][MATRIX_ROWS] = {
-    /* Base */
+    // oled screen is 22 characters across
+    //          123456789-123456789-12
     [_BASE] = {"Shf | Vid | Mic | Hnd"},
     [_FN] =   {"Shf | Cam | Mut | End"}
 };
@@ -120,7 +110,10 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
 // https://docs.splitkb.com/hc/en-us/articles/360013811280-How-do-I-convert-an-image-for-use-on-an-OLED-display-
 
 // flip the screen
-oled_rotation_t oled_init_user(oled_rotation_t rotation) { return OLED_ROTATION_180; }
+oled_rotation_t oled_init_user(oled_rotation_t rotation) { 
+    return OLED_ROTATION_180; 
+}
+
 void oled_task_user(void) {
     oled_write_ln_P(PSTR("Zoom controller"), false);
     // Show button hints
@@ -142,30 +135,6 @@ void oled_task_user(void) {
     oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false);
     oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false);
 }
-/*
-void oled_task_user(void) {
-    // Host Keyboard Layer Status
-    oled_write_P(PSTR("Layer: "), false);
-
-    switch (get_highest_layer(layer_state)) {
-        case _BASE:
-            oled_write_P(PSTR("Default\n"), false);
-            break;
-        case _FN:
-            oled_write_P(PSTR("FN\n"), false);
-            break;
-        default:
-            // Or use the write_ln shortcut over adding '\n' to the end of your string
-            oled_write_ln_P(PSTR("Undefined"), false);
-    }
-
-    // Host Keyboard LED Status
-    led_t led_state = host_keyboard_led_state();
-    oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false);
-    oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false);
-    oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false);
-}
-*/
 #endif
 
 // I hate the red LEDs showing on the pro micro, do you?
