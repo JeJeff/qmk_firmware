@@ -27,15 +27,53 @@ enum custom_keycodes {
     QMKURL
 };
 
+#define KY_VIDEO    LALT(KC_V) // Zoom Alt+V: Start/stop video
+#define KY_MICMUTE  LALT(KC_A) // Zoom Alt+A: Mute/unmute audio
+#define KY_MUTEALL  LALT(KC_M) // Zoom Alt+M: Mute/unmute audio for everyone except host (Note: For the meeting host only)
+// Zoom Alt+S: Launch share screen window and stop screen share (Note: Will only work when meeting control toolbar has focus)
+// Zoom Alt+Shift+S: Start/stop new screen share (Note: Will only work when meeting control toolbar has focus)
+#define KY_SHPAUSE  LALT(KC_T) // Zoom Alt+T: Pause or resume screen share (Note: Will only work when meeting control toolbar has focus)
+#define KY_RECLOCAL LALT(KC_R) // Zoom Alt+R: Start/stop local recording
+#define KY_RECCLOUD LALT(KC_C) // Zoom Alt+C: Start/stop cloud recording
+#define KY_RECPAUSE LALT(KC_P) // Zoom Alt+P: Pause or resume recording
+#define KY_CAMERA   LALT(KC_N) // Zoom Alt+N: Switch camera
+#define KY_FULLSCR  LALT(KC_F) // Zoom Alt+F: Enter or exit full screen
+#define KY_CHAT     LALT(KC_H) // Zoom Alt+H: Display/hide in-meeting chat panel
+#define KY_PARTICI  LALT(KC_U) // Zoom Alt+U:Display/hide participants panel
+#define KY_INVITE   LALT(KC_I) // Zoom Alt+I: Open invite window
+#define KY_RAISEHD  LALT(KC_Y) // Zoom Alt+Y: Raise/lower hand
+#define KY_ENDMEET  LALT(KC_Q) // Zoom Alt+Q: End meeting
+
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    /* Base */
     [_BASE] = LAYOUT(
-        KC_A,    KC_1,   MO(_FN), KC_TAB, KC_SPC
+        MO(_FN),    KY_VIDEO,   KY_MICMUTE, KY_RAISEHD,  KC_MUTE
     ),
     [_FN] = LAYOUT(
-        QMKBEST, QMKURL, _______, RESET,  XXXXXXX
+        _______,     KY_CAMERA,  KY_MUTEALL, KY_ENDMEET,  RESET
     )
 };
+
+// oled screen is 32 characters across
+// 123456789-123456789-12
+// Shf | Vid | Mic | Hnd
+// Shf | Cam | Mut | End
+const char* oled_key_hint_text[32][MATRIX_ROWS] = {
+    /* Base */
+    [_BASE] = {"Shf | Vid | Mic | Hnd"},
+    [_FN] =   {"Shf | Cam | Mut | End"}
+};
+
+/*
+const char* oled_key_press_text[][MATRIX_ROWS][MATRIX_COLS] = {
+    [_BASE] = {
+        "Shift", "Video", "Mute Mic", "Raise Hand", "Volume"
+    },
+    [_FN] = {
+        "Shift", "Switch Camera", "Mute Others", "End Meeting", "RESET"
+    }
+};
+*/
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
@@ -65,7 +103,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 // https://docs.splitkb.com/hc/en-us/articles/360010513760-How-can-I-use-a-rotary-encoder-
 bool encoder_update_user(uint8_t index, bool clockwise) {
   // index 1 == minion side
-  if (index == 1) {
+  if (index == 0) {
     if (clockwise) {
       tap_code(KC_VOLD);
     } else {
@@ -80,6 +118,31 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
 // Useful examples of OLED usage can be found at 
 // https://docs.splitkb.com/hc/en-us/articles/360010533820-What-can-you-use-an-OLED-display-for-on-a-keyboard-
 // https://docs.splitkb.com/hc/en-us/articles/360013811280-How-do-I-convert-an-image-for-use-on-an-OLED-display-
+
+// flip the screen
+oled_rotation_t oled_init_user(oled_rotation_t rotation) { return OLED_ROTATION_180; }
+void oled_task_user(void) {
+    oled_write_ln_P(PSTR("Zoom controller"), false);
+    // Show button hints
+    switch (get_highest_layer(layer_state)) {
+        case _BASE:
+            oled_write_ln_P(PSTR("Shf | Vid | Mic | Hnd"), false);
+            break;
+        case _FN:
+            oled_write_ln_P(PSTR("Shf | Cam | Mut | End"), false);
+            break;
+        default:
+            // Or use the write_ln shortcut over adding '\n' to the end of your string
+            oled_write_ln_P(PSTR("Undefined"), false);
+    }
+
+    // Host Keyboard LED Status
+    led_t led_state = host_keyboard_led_state();
+    oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false);
+    oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false);
+    oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false);
+}
+/*
 void oled_task_user(void) {
     // Host Keyboard Layer Status
     oled_write_P(PSTR("Layer: "), false);
@@ -102,5 +165,26 @@ void oled_task_user(void) {
     oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false);
     oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false);
 }
+*/
 #endif
 
+// I hate the red LEDs showing on the pro micro, do you?
+void matrix_init_kb(void) {
+
+    // // green led on
+    // DDRD |= (1<<5);
+    // PORTD &= ~(1<<5);
+
+    // // orange led on
+    // DDRB |= (1<<0);
+    // PORTB &= ~(1<<0);
+	
+	//turn off LEDs on ProMicro
+   DDRD &= ~(1<<5);
+   PORTD &= ~(1<<5);
+
+   DDRB &= ~(1<<0);
+   PORTB &= ~(1<<0);
+
+	matrix_init_user();
+};
